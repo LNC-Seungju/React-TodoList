@@ -6,7 +6,7 @@ class App extends Component {
     todos: [
       { task: 'react' },
       { task: 'angular' },
-      { task: 'vue'}
+      { task: 'vue' }
     ]
   }
   typeHandler = (e) => {
@@ -16,14 +16,27 @@ class App extends Component {
   }
   addHandler = (e) => {
     e.preventDefault();
-    const todo = this.state.todo;
-    const todos = this.state.todos;
+    const todo = {task: this.state.todo}
     this.setState({
-      todos : [...todos, todo],
-      todo: ''
+      todos: [...this.state.todos, todo],
+      todo: '',
+    })
+  }
+  deleteHandler = (idx) => {
+    const filtered = this.state.todos.filter((todos, i) => i!==idx)
+    this.setState({
+      todos: filtered
     })
   }
   render() {
+    const taskDisplay = this.state.todos.map((todo, id) => {
+      return (
+        <div key={id}>
+          <p>{todo.task}</p> 
+          <button onClick={() => this.deleteHandler(id)}>delete</button>
+        </div>
+      )
+    })
     return (
       <div>
         <form>
@@ -31,24 +44,7 @@ class App extends Component {
           <button onClick={this.addHandler}>추가</button>
         </form>
         <div>
-          <p>{this.state.todos[0].task}</p>
-          <button>삭제</button>
-        </div>
-        <div>
-          <p>{this.state.todos[1].task}</p>
-          <button>삭제</button>
-        </div>
-        <div>
-          <p>{this.state.todos[2].task}</p>
-          <button>삭제</button>
-        </div>
-        <div>
-          {this.state.todos.map(({task, id}) => 
-          <div key={id}>
-            <p>{task}</p> 
-            <button>delete</button>
-          </div>
-          )}
+          { taskDisplay }
         </div>
       </div>
     );
