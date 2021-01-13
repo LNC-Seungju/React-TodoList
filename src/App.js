@@ -1,13 +1,25 @@
 import React, { Component } from 'react';
+import AddTask from './component/AddTask';
+import DisplayTask from './component/DisplayTask';
+import { firestore }  from './firebase';
 
 class App extends Component {
   state = {
     todo: '',
-    todos: [
-      { task: 'react' },
-      { task: 'angular' },
-      { task: 'vue' }
-    ]
+    todos: []
+  }
+  componentDidMount() {
+    const todos = [...this.state.todos]
+    firestore.collection('tasks').get()
+      .then((docs)=>{
+        docs.forEach((doc) => {
+          console.log(doc.data().task+'  '+doc.id)
+          todos.push({task: doc.data().task, id: doc.id})
+        })
+        this.setState({
+          todos : todos
+        })
+      })
   }
   typeHandler = (e) => {
     this.setState({
@@ -16,38 +28,35 @@ class App extends Component {
   }
   addHandler = (e) => {
     e.preventDefault();
-    const todo = {task: this.state.todo}
-    this.setState({
-      todos: [...this.state.todos, todo],
-      todo: '',
-    })
+    firestore.collection('tasks').add({ task: this.state.todo })
+      .then((res)=>{
+        const todos = [...this.state.todos, { task: this.state.todo, id: res.id}]
+        this.setState({
+          todos : todos,
+          todo: ''
+        })
+      })
   }
-  deleteHandler = (idx) => {
-    const filtered = this.state.todos.filter((todos, i) => i!==idx)
-    this.setState({
-      todos: filtered
-    })
+  deleteHandler = (id) => {
+    // const filtered = this.state.todos.filter((todos, i) => i!==idx)
+    // this.setState({
+    //   todos: filtered
+    // })
+    firestore.collection('tasks').doc(id).delete()
+      .then(()=> {
+        const todos = this.state.todos.filter((todo) => todo.id !== id )
+        this.setState({ todos: todos })
+      })
   }
   render() {
-    const taskDisplay = this.state.todos.map((todo, id) => {
-      return (
-        <div key={id}>
-          <p>{todo.task}</p> 
-          <button onClick={() => this.deleteHandler(id)}>delete</button>
-        </div>
-      )
-    })
-    return (
-      <div>
-        <form>
-          <input value={this.state.todo} onChange={this.typeHandler}></input>
-          <button onClick={this.addHandler}>추가</button>
-        </form>
-        <div>
-          { taskDisplay }
-        </div>
-      </div>
+    return ( 
+      <>
+        <AddTask todo={this.state.todo} changeHandler={this.typeHandler} clickHandler={this.addHandler}
+        />
+        <DisplayTask todos={this.state.todos} deleteHandler={this.deleteHandler} />
+      </>
     );
   }
 }
+
 export default App;
